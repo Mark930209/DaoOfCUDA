@@ -88,23 +88,7 @@ CUDA = 编程模型 + 编译器 + 运行时库
 
 ### 2.3 CUDA生态全景图
 
-```
-应用层
-├─ 深度学习框架：PyTorch, TensorFlow, JAX
-├─ 科学计算：MATLAB, NumPy + CuPy
-└─ 图形渲染：Blender, Unity
-
-中间层（你将学习的核心）
-├─ 高层DSL：Triton, TileLang, cuTile
-├─ 模板库：CUTLASS, CuTe
-├─ 标准库：cuBLAS, cuDNN, cuFFT, Thrust
-└─ CUDA C++：kernel编程、内存管理
-
-底层
-├─ 编译器：nvcc, PTX, SASS
-├─ 驱动：CUDA Driver API
-└─ 硬件：SM, Tensor Core, HBM
-```
+![](https://raw.githubusercontent.com/Mark930209/MarkPicRepo/main/imgs/企业微信截图_17720984723013.png)
 
 ---
 
