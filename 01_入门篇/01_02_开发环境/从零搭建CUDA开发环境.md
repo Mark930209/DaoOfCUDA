@@ -54,6 +54,7 @@ nvidia-smi
 lspci | grep -i nvidia
 nvidia-smi
 ```
+![](https://raw.githubusercontent.com/Mark930209/MarkPicRepo/main/imgs/企业微信截图_17721737968652.png)
 
 #### 计算能力（Compute Capability）对照表
 
@@ -156,12 +157,8 @@ nvidia-smi
 
 2. 运行安装程序：
    - 选择 **"自定义安装"**
-   - 勾选：
-     - ✅ CUDA Toolkit
-     - ✅ CUDA Samples
-     - ✅ CUDA Documentation
-     - ✅ Nsight Compute
-     - ✅ Nsight Systems
+![](https://raw.githubusercontent.com/Mark930209/MarkPicRepo/main/imgs/企业微信截图_17722679303918.png)
+
    - 安装路径：默认 `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1`
 
 3. 验证安装：
@@ -175,14 +172,11 @@ echo %CUDA_PATH%
 # 应该显示：C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1
 ```
 
-#### Step 4: 编译测试程序
+#### Step 4: 测试程序
 
 ```powershell
-# 进入CUDA Samples目录
-cd "C:\ProgramData\NVIDIA Corporation\CUDA Samples\v13.1\1_Utilities\deviceQuery"
-
-# 编译
-nvcc deviceQuery.cpp -o deviceQuery.exe
+# 进入CUDA Demo目录
+cd "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.1\extras\demo_suite"
 
 # 运行
 .\deviceQuery.exe

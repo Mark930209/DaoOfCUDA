@@ -302,6 +302,8 @@ GPU with 10 SMs          GPU with 80 SMs
 | A100 | 108 | 64 | 6912 |
 | H100 | 132 | 128 | 16896 |
 
+![](https://raw.githubusercontent.com/Mark930209/MarkPicRepo/main/imgs/企业微信截图_17722705168676.png)
+
 **SM的结构**（以Ampere为例）：
 ```
 SM
