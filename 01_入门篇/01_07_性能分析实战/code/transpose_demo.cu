@@ -18,6 +18,7 @@
 
 constexpr int TILE_SIZE = 32;
 
+// 版本一：朴素实现。读取合并，但写入非合并（相邻线程写入地址间隔 height）。
 __global__ void transpose_naive(const float* in, float* out, int width, int height) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -27,6 +28,8 @@ __global__ void transpose_naive(const float* in, float* out, int width, int heig
     }
 }
 
+// 版本二：引入 Shared Memory 做块内转置，全局写入变为合并访问。
+// 但列访问 tile[threadIdx.x][threadIdx.y] 步长恰好 32，产生 Bank Conflict。
 __global__ void transpose_shared(const float* in, float* out, int width, int height) {
     __shared__ float tile[TILE_SIZE][TILE_SIZE];
 
@@ -46,6 +49,7 @@ __global__ void transpose_shared(const float* in, float* out, int width, int hei
     }
 }
 
+// 版本三：tile[32][33]（+1 padding），列访问步长变为 33，Bank Conflict 消失。
 __global__ void transpose_optimized(const float* in, float* out, int width, int height) {
     __shared__ float tile[TILE_SIZE][TILE_SIZE + 1];
 

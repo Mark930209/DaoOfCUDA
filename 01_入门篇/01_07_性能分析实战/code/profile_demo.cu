@@ -91,7 +91,8 @@ int main() {
     std::cout << "[Baseline] saxpy average kernel time: "
               << std::fixed << std::setprecision(4) << avg_ms << " ms" << std::endl;
 
-    // 一个故意写得不太合理的阶段：大量小 kernel + 同步。
+    // 阶段 2（反面教材）：大量极小 kernel + 每次同步，制造 GPU 空闲碎片。
+    // 用 Nsight Systems 观察 timeline 可以看到明显的调度开销。
     for (int i = 0; i < 200; ++i) {
         tiny_kernel<<<1, 256>>>(d_out, 256);
         CUDA_CHECK(cudaDeviceSynchronize());

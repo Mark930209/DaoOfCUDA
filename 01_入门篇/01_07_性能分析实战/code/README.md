@@ -1,109 +1,110 @@
 # 配套代码说明
 
-本目录用于配合《性能分析实战：Nsight Systems与Nsight Compute》一文。
+本目录包含《CUDA 性能分析实战：Nsight Systems 与 Nsight Compute 入门》一文的配套代码。
 
 ## 文件说明
 
+| 文件 | 用途 | 配合工具 |
+|---|---|---|
+| `profile_demo.cu` | 系统级分析：baseline + 反面教材 | Nsight Systems |
+| `transpose_demo.cu` | kernel 级分析：三版矩阵转置 | Nsight Compute |
+
 ### `profile_demo.cu`
 
-用于演示系统级 profiling 场景，重点是：
+包含两个阶段，用来在 Nsight Systems 的 timeline 中制造对比鲜明的场景：
 
-- 如何建立一个简单、可重复的 baseline；
-- 为什么预热重要；
-- 为什么“很多小 kernel + 每次同步”会让 timeline 很难看；
-- 如何为 `Nsight Systems` 提供可视化素材。
+1. **SAXPY 基线**：标准 SAXPY kernel，20 次取均值，含预热步骤；
+2. **反面教材**：200 次极小 kernel + 每次 `cudaDeviceSynchronize()`，制造 GPU 空闲碎片。
 
 ### `transpose_demo.cu`
 
-用于演示 kernel 级 profiling 场景，重点是：
+包含三个矩阵转置 kernel，体现逐步优化的过程：
 
-- `transpose_naive`
-- `transpose_shared`
-- `transpose_optimized`
+| kernel | 特征 |
+|---|---|
+| `transpose_naive` | 全局写入非合并（non-coalesced） |
+| `transpose_shared` | 引入 Shared Memory，但有 Bank Conflict |
+| `transpose_optimized` | `tile[32][33]` padding 消除 Bank Conflict |
 
-适合配合 `Nsight Compute` 观察：
+每个 kernel 运行后输出平均耗时、有效带宽（GB/s）和 speedup。
 
-- `Summary`
-- `Speed Of Light`
-- `Occupancy`
-- `Memory Workload Analysis`
-- `Roofline`
-- 三个版本之间的性能差异
+## 编译
 
-## 编译方法
-
-下面以 Windows + `nvcc` 为例。
-
-### 编译 `profile_demo.cu`
+**Linux / macOS**：
 
 ```bash
-nvcc -O3 -lineinfo -o profile_demo.exe profile_demo.cu
+nvcc -O3 -lineinfo -o profile_demo profile_demo.cu
+nvcc -O3 -lineinfo -o transpose_demo transpose_demo.cu
 ```
 
-### 编译 `transpose_demo.cu`
+**Windows**（需额外加 `/utf-8` 避免 C4819 警告）：
 
 ```bash
-nvcc -O3 -lineinfo -o transpose_demo.exe transpose_demo.cu
+nvcc -O3 -lineinfo -Xcompiler /utf-8 -o profile_demo.exe profile_demo.cu
+nvcc -O3 -lineinfo -Xcompiler /utf-8 -o transpose_demo.exe transpose_demo.cu
 ```
 
-> `-O3` 用于尽量贴近实际优化构建。  
-> `-lineinfo` 用于让 `Nsight Compute` 的源码关联视图更完整。
+编译选项说明：
 
-## 运行方法
+| 选项 | 作用 |
+|---|---|
+| `-O3` | 最高级别编译优化，贴近实际发布版本的性能表现 |
+| `-lineinfo` | 嵌入源码行号信息，让 Nsight Compute 能将指标关联到源码行 |
+| `-Xcompiler /utf-8` | （仅 Windows）让 MSVC 以 UTF-8 解析源文件，消除 C4819 警告 |
 
-### 运行 baseline / timeline 示例
+> `-lineinfo` 基本不影响运行性能，分析阶段建议始终加上。
+
+## 运行
 
 ```bash
-profile_demo.exe
+# baseline + timeline 示例
+./profile_demo
+
+# 矩阵转置示例
+./transpose_demo
 ```
 
-### 运行矩阵转置示例
+## 分析流程
+
+文章的核心思路：**先 Nsight Systems 看全局，再 Nsight Compute 挖热点**。
+
+### 第一步：Nsight Systems 分析 `profile_demo`
 
 ```bash
-transpose_demo.exe
+nsys profile -o profile_demo_report ./profile_demo
 ```
 
-程序会输出：
-
-- 平均执行时间
-- 简单校验结果
-- 有效带宽（矩阵转置示例）
-- speedup（矩阵转置示例）
-
-## 建议的分析顺序
-
-### 1. `Nsight Systems`
-
-先分析：
+只关心 CUDA 活动、减小报告体积：
 
 ```bash
-nsys profile -o profile_demo_report ./profile_demo.exe
+nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none -o profile_demo_report ./profile_demo
 ```
 
-优先观察：
+重点观察：
 
-- GPU 是否有明显空闲；
-- 小 kernel 是否过于碎片化；
-- 同步是否过多；
-- CPU 与 GPU 是否缺少 overlap。
+- 阶段 1 中 SAXPY 连续执行，GPU 利用率高；
+- 阶段 2 中 tiny_kernel 碎片化严重，GPU 大量空闲。
 
-### 2. `Nsight Compute`
+### 第二步：Nsight Compute 分析 `transpose_demo`
 
-再分析：
+分析全部 kernel：
 
 ```bash
-ncu -o transpose_demo_report ./transpose_demo.exe
+ncu -o transpose_report ./transpose_demo
 ```
 
-如果你希望更聚焦某一个 kernel，可以进一步使用过滤：
+按 kernel 过滤分析：
 
 ```bash
-ncu --kernel-name transpose_naive -o transpose_naive_report ./transpose_demo.exe
+ncu --kernel-name transpose_naive     -o naive_report     ./transpose_demo
+ncu --kernel-name transpose_shared    -o shared_report    ./transpose_demo
+ncu --kernel-name transpose_optimized -o optimized_report ./transpose_demo
 ```
 
-类似地，也可以分析：
+采集完整指标（含 Roofline，耗时更长）：
 
 ```bash
-ncu --kernel-name transpose_shared -o transpose_shared_report ./transpose_demo.exe
-ncu --kernel-name transpose_optimized -o transpose_optimized_report ./transpose_demo.exe
+ncu --set full -o transpose_full_report ./transpose_demo
 ```
+
+重点关注三个版本之间 Global Store Throughput、Bank Conflict、有效带宽的变化。
