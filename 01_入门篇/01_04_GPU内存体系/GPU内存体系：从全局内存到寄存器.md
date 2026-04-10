@@ -241,9 +241,9 @@ float value = data[tid];  // Thread 0→Bank 0, Thread 1→Bank 1, ...
 ```cuda
 __shared__ float data[256];
 
-// ❌ 2-way冲突：两个Thread访问同一个Bank
+// ❌ 2-way冲突：步长为2，只用到偶数Bank，每个Bank被两个Thread访问
 int tid = threadIdx.x;
-float value = data[tid * 2];  // Thread 0,1→Bank 0, Thread 2,3→Bank 2, ...
+float value = data[tid * 2];  // Thread 0,16→Bank 0, Thread 1,17→Bank 2, ...
 // 性能降低2倍
 ```
 

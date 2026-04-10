@@ -337,7 +337,7 @@ optimized  : x.xxxx ms, xxx.xx GB/s
 shared speedup over naive    : x.xxxx x
 optimized speedup over naive : x.xxxx x
 ```
-![alt text](企业微信截图_1775706536750.png)
+![](https://raw.githubusercontent.com/Mark930209/MarkPicRepo/main/imgs/企业微信截图_1775706536750.png)
 
 用 `Nsight Compute` 分析：
 > 注意：同样记得使用管理员权限运行
